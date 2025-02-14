@@ -2,3 +2,7 @@ yfinance
 pandas
 numpy
 alpaca-trade-api
+numpy
+scikit-learn
+nltk
+requests
