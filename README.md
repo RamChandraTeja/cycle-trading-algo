@@ -12,5 +12,5 @@ An automated trading bot that rebalances a portfolio using **Python** and **Azur
 ```bash
 git clone https://github.com/your-username/balancing-wheel-trading-bot.git
 cd balancing-wheel-trading-bot
-pip install -r requirements.txt
-python trading_bot.py
+pip install -r req.txt
+python trading_script.py
