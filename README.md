@@ -1,5 +1,5 @@
 # cycle-trading-algo
-# Balancing Wheel Trading Bot 🚀  
+# Balancing Wheel Trading Algo
 An automated trading bot that rebalances a portfolio using **Python** and **Azure Functions**.  
 
 ## Features  
