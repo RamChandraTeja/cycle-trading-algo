@@ -1,4 +1,3 @@
-
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -7,9 +6,18 @@ from sklearn.metrics import mean_squared_error, r2_score
 from api_fetcher import fetch_earnings_data
 from data_processor import process_earnings_data
 
-def earnings_prediction_model(symbol, token, api_url):
+def earnings_prediction_model(symbol, token, api_url, period="1y"):
+    """
+    Fetch, process, and predict earnings for a given stock symbol.
+
+    :param symbol: Stock symbol (e.g., 'AAPL')
+    :param token: API token for authentication
+    :param api_url: URL of the API endpoint
+    :param period: Time period for earnings data, default is '1y' for one year
+    :return: Trained model or None if data fetching or processing fails
+    """
     # Fetch data
-    raw_data = fetch_earnings_data(symbol, token, api_url)
+    raw_data = fetch_earnings_data(symbol, token, api_url, period)
     
     if raw_data is None:
         print(f"No data available for {symbol}")
@@ -18,17 +26,16 @@ def earnings_prediction_model(symbol, token, api_url):
     # Process data
     data = process_earnings_data(raw_data)
     
-    # Your existing model code here
-    # ...
-
-def earnings_prediction_model(data):
-    # Assuming data contains columns like 'EPS', 'Revenue', 'MarketCap', 'PE_Ratio', 'Surprise_Ratio'
-    # Where 'Surprise_Ratio' is (Actual EPS - Expected EPS) / Expected EPS from previous periods
+    # Check if necessary columns exist in the processed data
+    features = ['Revenue', 'Surprise_Ratio']  # Adjusted based on available data from process_earnings_data
+    if not all(feature in data.columns for feature in features):
+        print(f"Required features {features} are not all present in the data for {symbol}")
+        return None
     
     # Prepare features and target
-    features = ['Revenue', 'MarketCap', 'PE_Ratio', 'Surprise_Ratio']
+    # Here we use 'actualEPS' as our target since 'EPS' might not be in the processed data
     X = data[features]
-    y = data['EPS']
+    y = data['actualEPS']
     
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -49,4 +56,5 @@ def earnings_prediction_model(data):
     
     return model
 
-# Usage would involve loading data from NASDAQ earnings calendar and then calling this function
+# Example usage
+# model = earnings_prediction_model('AAPL', 'YOUR_API_TOKEN', 'https://cloud.iexapis.com/stable')
