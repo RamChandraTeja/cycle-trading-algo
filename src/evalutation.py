@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from textblob import TextBlob
 import requests
-import json
+# import json (commented out as it is not used)
 import logging
 
 # Setup logging
@@ -38,14 +38,14 @@ def fetch_stock_data(symbol, api_key, source='NASDAQ'):
         return None
     
     def analyze_sentiment(text):
-    """
-    Analyze sentiment of text using TextBlob.
-    
-    :param text: Text to analyze
-    :return: Sentiment polarity (-1 to 1)
-    """
-    blob = TextBlob(text)
-    return blob.sentiment.polarity
+        """
+        Analyze sentiment of text using TextBlob.
+        
+        :param text: Text to analyze
+        :return: Sentiment polarity (-1 to 1)
+        """
+        blob = TextBlob(text)
+        return blob.sentiment.polarity
 
 def fetch_and_analyze_news(symbol, api_key):
     """
@@ -67,23 +67,23 @@ def fetch_and_analyze_news(symbol, api_key):
         logger.error(f"Failed to fetch news for {symbol}: {e}")
         return 0
     def prepare_data(stock_data, news_sentiment):
-    """
-    Prepare data for model training, combining stock metrics with news sentiment.
-    
-    :param stock_data: Dictionary containing stock data
-    :param news_sentiment: Average sentiment from news
-    :return: DataFrame with features
-    """
-    # Example features, adjust based on actual data structure
-    features = {
-        'Open': stock_data['open'],
-        'High': stock_data['high'],
-        'Low': stock_data['low'],
-        'Close': stock_data['close'],
-        'Volume': stock_data['volume'],
-        'News_Sentiment': news_sentiment
-    }
-    return pd.DataFrame([features])
+        """
+        Prepare data for model training, combining stock metrics with news sentiment.
+        
+        :param stock_data: Dictionary containing stock data
+        :param news_sentiment: Average sentiment from news
+        :return: DataFrame with features
+        """
+        # Example features, adjust based on actual data structure
+        features = {
+            'Open': stock_data['open'],
+            'High': stock_data['high'],
+            'Low': stock_data['low'],
+            'Close': stock_data['close'],
+            'Volume': stock_data['volume'],
+            'News_Sentiment': news_sentiment
+        }
+        return pd.DataFrame([features])
 
 def train_model(X, y):
     """
