@@ -36,3 +36,13 @@ def fetch_stock_data(symbol, api_key, source='NASDAQ'):
     except requests.RequestException as e:
         logger.error(f"Failed to fetch data for {symbol}: {e}")
         return None
+    
+    def analyze_sentiment(text):
+    """
+    Analyze sentiment of text using TextBlob.
+    
+    :param text: Text to analyze
+    :return: Sentiment polarity (-1 to 1)
+    """
+    blob = TextBlob(text)
+    return blob.sentiment.polarity
