@@ -46,3 +46,13 @@ def fetch_stock_data(symbol, api_key, source='NASDAQ'):
     """
     blob = TextBlob(text)
     return blob.sentiment.polarity
+
+def fetch_and_analyze_news(symbol, api_key):
+    """
+    Fetch news related to the stock and analyze sentiment.
+    
+    :param symbol: Stock symbol
+    :param api_key: API key for news API
+    :return: Average sentiment score from news articles
+    """
+    url = f'https://newsapi.org/v2/everything?q={symbol}&apiKey={api_key}'
