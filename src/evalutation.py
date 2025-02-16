@@ -28,3 +28,11 @@ def fetch_stock_data(symbol, api_key, source='NASDAQ'):
         url = f'https://www.tradingview.com/api/v1/symbols/{symbol}/info'
     
     params = {'api_key': api_key}
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        logger.error(f"Failed to fetch data for {symbol}: {e}")
+        return None
