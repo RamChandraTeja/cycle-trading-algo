@@ -101,3 +101,6 @@ def train_model(X, y):
     y_pred = model.predict(X_test)
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
+
+    logger.info(f"Model Performance - MSE: {mse}, R2 Score: {r2}")
+    return model
