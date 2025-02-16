@@ -134,3 +134,14 @@ def stock_analysis(symbol, stock_api_key, news_api_key):
     
     # Predict future movement or price
     prediction = model.predict(features_df)
+
+    # Simplified analysis
+    analysis = {
+        'Symbol': symbol,
+        'Current Price': stock_data['close'],
+        'News Sentiment': news_sentiment,
+        'Predicted Movement': 'Up' if prediction[0] > stock_data['close'] else 'Down',
+        'Investment Recommendation': 'Consider Buying' if prediction[0] > stock_data['close'] and news_sentiment > 0 else 'Hold/Sell'
+    }
+    
+    return analysis
