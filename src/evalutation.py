@@ -83,3 +83,4 @@ def fetch_and_analyze_news(symbol, api_key):
         'Volume': stock_data['volume'],
         'News_Sentiment': news_sentiment
     }
+    return pd.DataFrame([features])
