@@ -103,3 +103,22 @@ if __name__ == "__main__":
     total_value, gains, portfolio_breakdown = calculate_portfolio_value(current_prices, portfolio)
 
     display_portfolio(portfolio_breakdown, total_value, gains)
+
+    from earningsPredictionModel import earnings_prediction_model
+
+from earningsPredictionModel import earnings_prediction_model
+
+def main():
+    symbol = 'AAPL'
+    token = 'YOUR_API_TOKEN'
+    api_url = 'https://cloud.iexapis.com/stable'
+    
+    model = earnings_prediction_model(symbol, token, api_url)
+    if model:
+        # Here you would use the model results in your trading logic
+        print(f"Model created for {symbol}. You can now use this model for trading decisions.")
+    else:
+        print("Failed to create model.")
+
+if __name__ == "__main__":
+    main()
