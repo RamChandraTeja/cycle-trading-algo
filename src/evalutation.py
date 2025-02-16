@@ -56,3 +56,13 @@ def fetch_and_analyze_news(symbol, api_key):
     :return: Average sentiment score from news articles
     """
     url = f'https://newsapi.org/v2/everything?q={symbol}&apiKey={api_key}'
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        news_data = response.json()
+        articles = news_data.get('articles', [])
+        sentiments = [analyze_sentiment(article['description']) for article in articles if article.get('description')]
+        return np.mean(sentiments) if sentiments else 0
+    except requests.RequestException as e:
+        logger.error(f"Failed to fetch news for {symbol}: {e}")
+        return 0
