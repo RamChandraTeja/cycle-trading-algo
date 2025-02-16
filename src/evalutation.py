@@ -145,3 +145,12 @@ def stock_analysis(symbol, stock_api_key, news_api_key):
     }
     
     return analysis
+
+# Example usage
+if __name__ == "__main__":
+    symbol = 'SNOW'  # Snowflake
+    stock_api_key = 'YOUR_STOCK_API_KEY'
+    news_api_key = 'YOUR_NEWS_API_KEY'
+    
+    result = stock_analysis(symbol, stock_api_key, news_api_key)
+    print(result)
