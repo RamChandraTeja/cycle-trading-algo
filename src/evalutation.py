@@ -66,3 +66,20 @@ def fetch_and_analyze_news(symbol, api_key):
     except requests.RequestException as e:
         logger.error(f"Failed to fetch news for {symbol}: {e}")
         return 0
+    def prepare_data(stock_data, news_sentiment):
+    """
+    Prepare data for model training, combining stock metrics with news sentiment.
+    
+    :param stock_data: Dictionary containing stock data
+    :param news_sentiment: Average sentiment from news
+    :return: DataFrame with features
+    """
+    # Example features, adjust based on actual data structure
+    features = {
+        'Open': stock_data['open'],
+        'High': stock_data['high'],
+        'Low': stock_data['low'],
+        'Close': stock_data['close'],
+        'Volume': stock_data['volume'],
+        'News_Sentiment': news_sentiment
+    }
