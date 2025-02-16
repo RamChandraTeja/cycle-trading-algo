@@ -118,3 +118,19 @@ def stock_analysis(symbol, stock_api_key, news_api_key):
     stock_data = fetch_stock_data(symbol, stock_api_key)
     if not stock_data:
         return "Failed to fetch stock data."
+    # Fetch and analyze news sentiment
+    news_sentiment = fetch_and_analyze_news(symbol, news_api_key)
+    
+    # Prepare data
+    features_df = prepare_data(stock_data, news_sentiment)
+    
+    # Here you would typically have historical data to train the model, 
+    # but for this example, we'll simulate with dummy data
+    # y = stock_data['future_price'] or some other target metric
+    y = np.random.rand(len(features_df))  # Placeholder for actual target
+    
+    # Train the model (in practice, you'd use historical data)
+    model = train_model(features_df, y)
+    
+    # Predict future movement or price
+    prediction = model.predict(features_df)
