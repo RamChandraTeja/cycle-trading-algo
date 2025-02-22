@@ -69,3 +69,14 @@ This document outlines the financial metrics implemented in the `financial_metri
 - All metrics are implemented in `financial_metrics.py` and can be integrated into `balanceWheelAlgo.py`, `data_processor.py`, or `tradingScript.py`.
 - Some metrics (e.g., sentiment analysis) require external API keys and additional libraries (e.g., `tweepy`, `requests`).
 - Ensure you handle missing data and errors appropriately in production.
+
+## 4. Market Sentiment Metrics
+- **Social Media Sentiment**: Analyzes sentiment from platforms like Twitter/X using advanced NLP techniques (e.g., DistilBERT or FinBERT) to gauge public perception of the asset. Returns a score from -1 (very negative) to 1 (very positive).
+  - Source: Twitter/X API (`tweepy` or `snscrape`).
+  - Method: Preprocesses text (remove noise, tokenize, remove stopwords), uses transformer-based models for classification, and aggregates scores over a time window.
+- **News Sentiment**: (Optional) Analyzes sentiment from financial news using similar NLP techniques.
+  - Source: News APIs (e.g., Alpha Vantage, NewsAPI).
+- **Put/Call Ratio**: Indicates market sentiment using options data (bullish or bearish).
+  - Source: Options data APIs (e.g., Alpha Vantage, Quandl).
+- **VIX (Volatility Index)**: Measures market fear and expected volatility.
+  - Source: CBOE data or financial APIs.

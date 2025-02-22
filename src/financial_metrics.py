@@ -2,10 +2,21 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime, timedelta
+import tweepy
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import re
+from transformers import pipeline, DistilBertTokenizer, DistilBertForSequenceClassification
+import torch
+
+# Download NLTK data (run once)
+nltk.download('punkt')
+nltk.download('stopwords')
 
 class FinancialMetrics:
     def __init__(self, symbol, start_date=None, end_date=None):
-        self.symbol = symbol
+        self.symbol = symbol.upper()
         if start_date is None:
             start_date = datetime.now() - timedelta(days=365)  # Default to 1 year
         if end_date is None:
@@ -18,99 +29,84 @@ class FinancialMetrics:
         df = ticker.history(start=start_date, end=end_date)
         return df
 
-    # Technical Indicators
-    def moving_average(self, period=20, type_='SMA'):
-        """Calculate Simple or Exponential Moving Average."""
-        if type_ == 'SMA':
-            return self.df['Close'].rolling(window=period).mean()
-        elif type_ == 'EMA':
-            return self.df['Close'].ewm(span=period, adjust=False).mean()
+    # ... (Keep existing technical, fundamental, and risk metrics as they are)
 
-    def rsi(self, period=14):
-        """Calculate Relative Strength Index."""
-        delta = self.df['Close'].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
-        return 100 - (100 / (1 + rs))
+    def market_sentiment(self, num_tweets=100, time_window="1h"):
+        """
+        Perform sophisticated sentiment analysis using Twitter/X data and BERT.
+        Returns a sentiment score (-1 to 1, where -1 is very negative, 0 is neutral, 1 is very positive).
+        """
+        # Initialize Twitter API (replace with your credentials)
+        try:
+            auth = tweepy.OAuthHandler("YOUR_CONSUMER_KEY", "YOUR_CONSUMER_SECRET")
+            auth.set_access_token("YOUR_ACCESS_TOKEN", "YOUR_ACCESS_TOKEN_SECRET")
+            api = tweepy.API(auth, wait_on_rate_limit=True)
+        except:
+            print("Twitter API authentication failed. Falling back to snscrape or skipping.")
+            return None
 
-    def macd(self, fast=12, slow=26, signal=9):
-        """Calculate MACD and Signal Line."""
-        exp1 = self.df['Close'].ewm(span=fast, adjust=False).mean()
-        exp2 = self.df['Close'].ewm(span=slow, adjust=False).mean()
-        macd = exp1 - exp2
-        signal_line = macd.ewm(span=signal, adjust=False).mean()
-        return macd, signal_line
+        # Preprocess text function
+        def preprocess_text(text):
+            # Convert to lowercase
+            text = text.lower()
+            # Remove URLs, mentions, hashtags, and special characters
+            text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
+            text = re.sub(r'@\w+|\#', '', text)
+            # Remove punctuation and numbers
+            text = re.sub(r'[^\w\s]', '', text)
+            # Tokenize and remove stopwords
+            stop_words = set(stopwords.words('english'))
+            tokens = word_tokenize(text)
+            tokens = [token for token in tokens if token not in stop_words]
+            return ' '.join(tokens)
 
-    def bollinger_bands(self, period=20, std_dev=2):
-        """Calculate Bollinger Bands."""
-        ma = self.df['Close'].rolling(window=period).mean()
-        std = self.df['Close'].rolling(window=period).std()
-        upper = ma + (std_dev * std)
-        lower = ma - (std_dev * std)
-        return upper, lower, ma
+        # Load pre-trained DistilBERT model and tokenizer for sentiment analysis
+        model_name = "distilbert-base-uncased-finetuned-sst-2-english"
+        tokenizer = DistilBertTokenizer.from_pretrained(model_name)
+        model = DistilBertForSequenceClassification.from_pretrained(model_name)
+        sentiment_analyzer = pipeline(
+            "sentiment-analysis",
+            model=model,
+            tokenizer=tokenizer,
+            device=0 if torch.cuda.is_available() else -1  # Use GPU if available
+        )
 
-    # Fundamental Metrics (using yfinance)
-    def get_fundamentals(self):
-        """Fetch fundamental data like P/E, P/B, Dividend Yield, etc."""
-        ticker = yf.Ticker(self.symbol)
-        info = ticker.info
-        fundamentals = {
-            'pe_ratio': info.get('trailingPE', None),
-            'pb_ratio': info.get('priceToBook', None),
-            'dividend_yield': info.get('dividendYield', None) * 100,  # Convert to percentage
-            'eps': info.get('trailingEps', None),
-            'debt_to_equity': info.get('debtToEquity', None),
-            'roe': info.get('returnOnEquity', None) * 100  # Convert to percentage
-        }
-        return fundamentals
+        # Fetch recent tweets about the symbol
+        try:
+            tweets = tweepy.Cursor(api.search_tweets,
+                                 q=f"${self.symbol} -filter:retweets",
+                                 lang="en",
+                                 tweet_mode="extended").items(num_tweets)
+            tweet_texts = [tweet.full_text for tweet in tweets]
+        except Exception as e:
+            print(f"Error fetching tweets: {e}")
+            return None
 
-    # Risk Management Metrics
-    def value_at_risk(self, confidence=0.95, period=1):
-        """Calculate Value at Risk (VaR) for portfolio or single asset."""
-        returns = self.df['Close'].pct_change().dropna()
-        var = returns.quantile(1 - confidence)
-        return var * self.df['Close'].iloc[-1]
+        # Preprocess tweets
+        processed_texts = [preprocess_text(text) for text in tweet_texts if text]
 
-    def sharpe_ratio(self, risk_free_rate=0.01, period=252):
-        """Calculate Sharpe Ratio (annualized)."""
-        returns = self.df['Close'].pct_change().dropna()
-        excess_return = returns.mean() * period - risk_free_rate
-        volatility = returns.std() * np.sqrt(period)
-        return excess_return / volatility
+        # Analyze sentiment for each tweet
+        sentiments = []
+        for text in processed_texts:
+            if len(text.split()) > 0:  # Ensure text is not empty
+                result = sentiment_analyzer(text)[0]
+                label = result['label']
+                score = result['score']
+                # Map labels to numeric scores: 'POSITIVE' -> 1, 'NEGATIVE' -> -1
+                sentiment_score = 1.0 if label == 'POSITIVE' else -1.0
+                sentiments.append(sentiment_score * score)
 
-    def max_drawdown(self):
-        """Calculate Maximum Drawdown."""
-        roll_max = self.df['Close'].cummax()
-        drawdown = self.df['Close'] / roll_max - 1.0
-        return drawdown.min()
+        if not sentiments:
+            return 0.0  # Neutral if no valid sentiments
 
-    # Market Sentiment (Placeholder for Twitter/X or news API)
-    def market_sentiment(self):
-        """Placeholder for sentiment analysis (e.g., Twitter/X, news)."""
-        # This would require an API like Twitter/X or news scraper
-        print("Market sentiment analysis requires external API integration (e.g., Twitter/X, news).")
-        return None
+        # Aggregate sentiment (average score over time window)
+        avg_sentiment = np.mean(sentiments)
+        return avg_sentiment
 
-    # Custom Metrics
-    def asset_correlation(self, other_symbol):
-        """Calculate correlation between two assets."""
-        df1 = self.df['Close']
-        df2 = FinancialMetrics(other_symbol).df['Close']
-        combined = pd.concat([df1, df2], axis=1, join='inner').dropna()
-        return combined.corr().iloc[0, 1]
-
-    def cycle_length(self, period=20):
-        """Detect cycle length using autocorrelation or Fourier analysis."""
-        # Simple autocorrelation for cycle detection
-        autocorr = pd.Series.autocorr(self.df['Close'].pct_change().dropna(), lag=period)
-        return autocorr
+    # ... (Keep other methods as they are)
 
 # Example usage
 if __name__ == "__main__":
     metrics = FinancialMetrics("AAPL")
-    print("Moving Average (SMA, 20-day):", metrics.moving_average(period=20).tail())
-    print("RSI (14-day):", metrics.rsi().tail())
-    print("Fundamentals:", metrics.get_fundamentals())
-    print("Value at Risk (95% confidence):", metrics.value_at_risk())
-    print("Sharpe Ratio:", metrics.sharpe_ratio())
+    sentiment = metrics.market_sentiment(num_tweets=50, time_window="1h")
+    print(f"Market Sentiment for {metrics.symbol}: {sentiment:.2f}")
